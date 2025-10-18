@@ -1,0 +1,35 @@
+h2 {
+    color: green;
+    font-style: italic;
+}
+
+li {
+    color: grey;
+    padding-top: 10px;
+    font-size: 14px;
+}
+
+.person {
+    color: brown;
+    padding-top: 20px;
+    font-size: 14px;
+}
+
+.error {
+    color: darkred;
+    background: lightgrey;
+    font-size: 20px;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.confirmation {
+    color: green;
+    background: lightgrey;
+    font-size: 20px;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}

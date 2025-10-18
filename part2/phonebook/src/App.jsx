@@ -1,5 +1,6 @@
 import axios from "axios";
 import personService from "./services/persons";
+import Notification from "./Notification";
 import { useState } from "react";
 import { useEffect } from "react";
 
@@ -37,12 +38,12 @@ const PersonForm = ({
 };
 const Person = ({ person, onDeleteClick }) => {
   return (
-    <div>
+    <li className="person">
       {person.name} {person.number}
       <button type="button" onClick={onDeleteClick}>
         Delete
       </button>
-    </div>
+    </li>
   );
 };
 
@@ -55,30 +56,42 @@ const Persons = ({ persons, searchString, onDeleteClick }) => {
         );
   return (
     <>
-      {filteredBySearch.map((person) => (
-        <Person
-          key={person.id}
-          person={person}
-          onDeleteClick={() => onDeleteClick(person)}
-        />
-      ))}
+      <ul>
+        {filteredBySearch.map((person) => (
+          <Person
+            key={person.id}
+            person={person}
+            onDeleteClick={() => onDeleteClick(person)}
+          />
+        ))}
+      </ul>
     </>
   );
 };
+
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [searchString, setNewSearchString] = useState("");
-
+  const [confirmationMessage, setConfirmationMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const removePerson = (person) => {
     if (!window.confirm(`really delete ${person.name}`)) {
       console.log("deletion aborted");
       return;
     }
-    personService.deletePerson(person.id).then((response) => {
-      setPersons(persons.filter((p) => p.id !== response.id));
-    });
+    personService
+      .deletePerson(person.id)
+      .then((response) => {
+        setPersons(persons.filter((p) => p.id !== response.id));
+      })
+      .catch((error) => {
+        setErrorMessage(person.name, " already deleted");
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 5000);
+      });
   };
   const addPerson = (event) => {
     event.preventDefault();
@@ -91,22 +104,35 @@ const App = () => {
       )
         return;
       const updated = { ...duplicate, number: newNumber };
-      personService.update(duplicate.id, updated).then((updatedPerson) => {
-        setPersons(
-          persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
-        );
-      });
+      personService
+        .update(duplicate.id, updated)
+        .then((updatedPerson) => {
+          setConfirmationMessage(`${updatedPerson.name} updated`);
+          setTimeout(() => setConfirmationMessage(null), 3000);
+          setPersons(
+            persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
+          );
+        })
+        .catch((error) => {
+          console.error(error);
+          setErrorMessage(`${updated.name} already deleted`);
+          setTimeout(() => {
+            setErrorMessage(null);
+          }, 5000);
+
+          setPersons(persons.filter((p) => p.id !== updated.id));
+        });
     } else {
       const newPerson = {
         name: newName,
         number: newNumber,
       };
 
-      personService
-        .create(newPerson)
-        .then((returnedAddedPerso) =>
-          setPersons(persons.concat(returnedAddedPerso)),
-        );
+      personService.create(newPerson).then((returnedAddedPerso) => {
+        setConfirmationMessage(`${newPerson.name} added`);
+        setTimeout(() => setConfirmationMessage(null), 3000);
+        setPersons(persons.concat(returnedAddedPerso));
+      });
     }
     setNewName("");
     setNewNumber("");
@@ -133,6 +159,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={confirmationMessage} type="confirmation" />
+      <Notification message={errorMessage} type="error" />
       <Filter
         searchString={searchString}
         searchInputChange={searchInputChange}
